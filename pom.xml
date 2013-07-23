@@ -13,6 +13,10 @@
         <developerConnection>scm:git:ssh://git@github.com/wurstmeister/storm-kafka-0.8-plus.git</developerConnection>
         <url>https://github.com/wurstmeister/storm-kafka-0.8-plus</url>
     </scm>
+    <properties>
+        <maven.compiler.target>1.6</maven.compiler.target>
+        <maven.compiler.source>1.6</maven.compiler.source>
+    </properties>
     <build>
         <sourceDirectory>src/jvm</sourceDirectory>
         <testSourceDirectory>src/test</testSourceDirectory>
@@ -35,6 +39,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3</version>
                 <configuration>
                     <source>1.6</source>
                     <target>1.6</target>
