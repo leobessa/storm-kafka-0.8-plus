@@ -75,10 +75,10 @@ public class PartitionManager {
         }
 
         if(!topologyInstanceId.equals(jsonTopologyId) && spoutConfig.forceFromStart) {
-            _committedTo = KafkaUtils.getOffset(_consumer, spoutConfig.topic, id.partition, spoutConfig.startOffsetTime);
+            _committedTo = KafkaUtils.getLastOffset(_consumer, spoutConfig.topic, id.partition, spoutConfig.startOffsetTime, spoutConfig.clientId);
 	    LOG.info("Using startOffsetTime to choose last commit offset.");
         } else if(jsonTopologyId == null || jsonOffset == null) { // failed to parse JSON?
-            _committedTo = KafkaUtils.getOffset(_consumer, spoutConfig.topic, id.partition,  kafka.api.OffsetRequest.LatestTime());
+            _committedTo = KafkaUtils.getLastOffset(_consumer, spoutConfig.topic, id.partition, kafka.api.OffsetRequest.LatestTime(), spoutConfig.clientId);
 	    LOG.info("Setting last commit offset to HEAD.");
         } else {
             _committedTo = jsonOffset;
@@ -211,8 +211,8 @@ public class PartitionManager {
     }
 
     public long queryPartitionOffsetLatestTime() {
-        return KafkaUtils.getOffset(_consumer, _spoutConfig.topic, _partition.partition,
-				OffsetRequest.LatestTime());
+        return KafkaUtils.getLastOffset(_consumer, _spoutConfig.topic, _partition.partition,
+                OffsetRequest.LatestTime(),_spoutConfig.clientId);
     }
 
     public long lastCommittedOffset() {

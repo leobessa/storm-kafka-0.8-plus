@@ -4,6 +4,7 @@ import backtype.storm.metric.api.IMetric;
 import kafka.api.PartitionOffsetRequestInfo;
 import kafka.common.TopicAndPartition;
 import kafka.javaapi.OffsetRequest;
+import kafka.javaapi.OffsetResponse;
 import kafka.javaapi.consumer.SimpleConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,8 +17,6 @@ import java.util.Set;
 
 public class KafkaUtils {
     public static final Logger LOG = LoggerFactory.getLogger(KafkaUtils.class);
-	private static final int NO_OFFSET = -5;
-
 
 	public static IBrokerReader makeBrokerReader(Map stormConf, KafkaConfig conf) {
 		if(conf.hosts instanceof StaticHosts) {
@@ -27,19 +26,20 @@ public class KafkaUtils {
 		}
 	}
 
-	public static long getOffset(SimpleConsumer consumer, String topic, int partition, long startOffsetTime) {
+	public static long getLastOffset(SimpleConsumer consumer, String topic, int partition, long whichTime, String clientName) {
 		TopicAndPartition topicAndPartition = new TopicAndPartition(topic, partition);
 		Map<TopicAndPartition, PartitionOffsetRequestInfo> requestInfo = new HashMap<TopicAndPartition, PartitionOffsetRequestInfo>();
-		requestInfo.put(topicAndPartition, new PartitionOffsetRequestInfo(startOffsetTime, 1));
+		requestInfo.put(topicAndPartition, new PartitionOffsetRequestInfo(whichTime, 1));
 		OffsetRequest request = new OffsetRequest(
-				requestInfo, kafka.api.OffsetRequest.CurrentVersion(), consumer.clientId());
+				requestInfo, kafka.api.OffsetRequest.CurrentVersion(), clientName);
 
-		long[] offsets = consumer.getOffsetsBefore(request).offsets(topic, partition);
-		if ( offsets.length > 0) {
-			return offsets[0];
-		} else {
-			return NO_OFFSET;
-		}
+        final OffsetResponse response = consumer.getOffsetsBefore(request);
+        if (response.hasError()){
+            LOG.error("Error fetching data Offset Data the Broker. Reason: " + response.errorCode(topic, partition));
+            return 0;
+        }
+        long[] offsets = response.offsets(topic, partition);
+        return offsets[0];
 	}
 
 	public static class KafkaOffsetMetric implements IMetric {
@@ -72,7 +72,7 @@ public class KafkaUtils {
                             LOG.warn("partitionToOffset contains partition not found in _connections. Stale partition data?");
                             return null;
                         }
-                        long latestTimeOffset = getOffset(consumer, _topic, partition.partition, kafka.api.OffsetRequest.LatestTime());
+                        long latestTimeOffset = getLastOffset(consumer, _topic, partition.partition, kafka.api.OffsetRequest.LatestTime(), consumer.clientId());
                         if(latestTimeOffset == 0) {
                             LOG.warn("No data found in Kafka Partition " + partition.getId());
                             return null;

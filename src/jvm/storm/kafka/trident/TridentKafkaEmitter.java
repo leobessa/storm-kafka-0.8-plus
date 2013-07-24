@@ -92,14 +92,14 @@ public class TridentKafkaEmitter {
 				lastInstanceId = (String) lastTopoMeta.get("id");
 			}
 			if (_config.forceFromStart && !_topologyInstanceId.equals(lastInstanceId)) {
-				offset = KafkaUtils.getOffset(consumer, _config.topic, partition.partition, _config.startOffsetTime);
+				offset = KafkaUtils.getLastOffset(consumer, _config.topic, partition.partition, _config.startOffsetTime, _config.clientId);
 			} else {
 				offset = (Long) lastMeta.get("nextOffset");
 			}
 		} else {
 			long startTime = kafka.api.OffsetRequest.LatestTime();
 			if (_config.forceFromStart) startTime = _config.startOffsetTime;
-			offset = KafkaUtils.getOffset(consumer, _config.topic, partition.partition, startTime);
+			offset = KafkaUtils.getLastOffset(consumer, _config.topic, partition.partition, startTime, _config.clientId);
 		}
 		ByteBufferMessageSet msgs;
 		try {
