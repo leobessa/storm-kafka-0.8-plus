@@ -132,11 +132,12 @@ public class PartitionManager {
         long start = System.nanoTime();
         ByteBufferMessageSet msgs = _consumer.fetch(
                 new FetchRequestBuilder().addFetch(
-                    _spoutConfig.topic,
-                    _partition.partition,
-                    _emittedToOffset,
-                    _spoutConfig.fetchSizeBytes).build()).messageSet(_spoutConfig.topic,
-				_partition.partition);
+                        _spoutConfig.topic,
+                        _partition.partition,
+                        _emittedToOffset,
+                        _spoutConfig.fetchSizeBytes)
+                        .clientId(_spoutConfig.clientId).build()).messageSet(_spoutConfig.topic,
+                _partition.partition);
         long end = System.nanoTime();
         long millis = (end - start) / 1000000;
         _fetchAPILatencyMax.update(millis);
